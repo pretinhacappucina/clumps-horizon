@@ -1,0 +1,15 @@
+[package]
+name = "clumps-horizon"
+version = "26.3.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+description = "Clumps for Horizon: merges nearby XP orbs and collects them at once (native Horizon mixin mod)"
+
+[lib]
+# This exact source is also injected as a same-crate module (`crate::game::clumps`) by horizon-mixins.
+path = "mixins/clumps/runtime.rs"
+
+[workspace]
+members = ["tools/audit"]
+resolver = "2"

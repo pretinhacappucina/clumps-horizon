@@ -1,0 +1,81 @@
+[mod]
+id = "clumps"
+version = "26.3.0"
+priority = 100
+
+# Pinned to Horizon Nightly 2026-11-08 (compatibility.json): its source is what the
+# hooks below were read from. The launcher builds this on that exact commit.
+[compatibility]
+horizon_revision = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca"
+
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game.rs"
+name = "clumps"
+source = "runtime.rs"
+
+[[module]]
+id = "glue"
+file = "crates/horizon-client/src/game.rs"
+name = "clumps_glue"
+source = "glue.rs"
+
+# ExperienceOrb.canMerge: any two live orbs.
+[[injection]]
+id = "can-merge"
+hook = "experience_orb_can_merge"
+hook_version = 1
+kind = "HEAD"
+helper = "can_merge.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "into", ty = "u32", value = "into" },
+  { name = "from", ty = "u32", value = "from" },
+  { name = "can_merge", ty = "&mut bool", value = "&mut *can_merge" },
+]
+
+# ExperienceOrb.merge / tryMergeToExisting: runs after other mods' listeners, so it sees their cancel.
+[[injection]]
+id = "merge"
+hook = "experience_orb_merge"
+hook_version = 1
+kind = "RETURN"
+helper = "merge.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "dimension", ty = "&str", value = "dimension" },
+  { name = "into", ty = "u32", value = "into" },
+  { name = "from", ty = "u32", value = "from" },
+  { name = "from_value", ty = "u32", value = "from_value" },
+  { name = "canceled", ty = "&mut bool", value = "&mut *canceled" },
+  { name = "value", ty = "()", value = "$value" },
+]
+
+# Without this the server does not swap a player in for the pickup hook.
+[[injection]]
+id = "pickup-listened"
+hook = "experience_orb_pickup_listened"
+hook_version = 1
+kind = "RETURN"
+helper = "listened.rs"
+bindings = [
+  { name = "game", ty = "&crate::game::Game<'_>", value = "&*self" },
+  { name = "listened", ty = "&mut bool", value = "&mut *listened" },
+  { name = "value", ty = "()", value = "$value" },
+]
+
+# ExperienceOrb.playerTouch: the whole clump in one pickup (server players).
+[[injection]]
+id = "pickup"
+hook = "experience_orb_pickup"
+hook_version = 1
+kind = "RETURN"
+helper = "pickup.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "player", ty = "u128", value = "player" },
+  { name = "value", ty = "&mut u32", value = "&mut *value" },
+  { name = "count", ty = "&mut u32", value = "&mut *count" },
+  { name = "canceled", ty = "&bool", value = "&*canceled" },
+  { name = "result", ty = "()", value = "$value" },
+]
