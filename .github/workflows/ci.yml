@@ -22,13 +22,14 @@ jobs:
       - run: cargo test --workspace
       - name: Validate against pinned Horizon
         run: |
-          git clone --filter=blob:none https://github.com/horizon-rust/horizon ../horizon
+          T="$RUNNER_TEMP"
+          git clone --filter=blob:none https://github.com/horizon-rust/horizon "$T/horizon"
           REV="$(python3 -c 'import json; print(json.load(open("compatibility.json"))["horizon_revision"])')"
-          mkdir ../export && git -C ../horizon archive "$REV" | tar -x -C ../export
-          find ../export -type l -exec sh -c 'c=$(readlink -f "$1"); rm "$1"; cp "$c" "$1"' _ {} \;
-          echo "$REV" > ../export/.horizon-revision
-          ../horizon-mixins/target/release/horizon-mixins apply --workspace ../export --mods mixins --out ../staged
-          cd ../staged && cargo check -p horizon-client
+          mkdir "$T/export" && git -C "$T/horizon" archive "$REV" | tar -x -C "$T/export"
+          find "$T/export" -type l -exec sh -c 'c=$(readlink -f "$1"); rm "$1"; cp "$c" "$1"' _ {} \;
+          echo "$REV" > "$T/export/.horizon-revision"
+          ../horizon-mixins/target/release/horizon-mixins apply --workspace "$T/export" --mods "$PWD/mixins" --out "$T/staged"
+          cd "$T/staged" && cargo check -p horizon-client
       - run: python3 tools/package.py
       - uses: actions/upload-artifact@v4
         with:
